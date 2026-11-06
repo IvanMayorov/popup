@@ -11,12 +11,26 @@
 <p>Нажмите кнопку, чтобы открыть попап. Закрыть его можно крестиком, клавишей Esc или кликом по фону.</p>
 <button class="demo" id="a">Обычный попап</button>
 <button class="demo" id="b">Широкий попап</button>
+<button class="demo" id="c">Много текста</button>
+<p>Страница короткая, а в третьем примере текста намного больше, чем помещается на экран. Окно не вылезает за край: оно занимает высоту экрана, а текст прокручивается внутри него. Страница под попапом при этом не прокручивается.</p>
 <template id="article"><h2>Заголовок статьи</h2><p>Любой HTML: текст, картинки, видео. Длинное содержимое прокручивается внутри окна.</p><p><button class="demo" data-popup-close>Закрыть из содержимого</button></p></template>
 <script src="popup.js"></script>
 <script>
   const tpl = document.getElementById("article");
   document.getElementById("a").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Пример" });
   document.getElementById("b").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Широкий пример", wide: true });
+  document.getElementById("c").onclick = () => {
+    const box = document.createElement("div");
+    const add = (tag, text, cls) => { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; box.append(el); return el; };
+    add("h2", "Длинная статья");
+    add("p", "Прокрутите текст вниз. Крестик остаётся на месте, а страница под окном стоит.");
+    for (let n = 1; n <= 30; n++) {
+      if (n % 6 === 1) add("h3", "Раздел " + Math.ceil(n / 6));
+      else add("p", "Абзац " + n + ". Длинный текст нужен, чтобы окно стало выше экрана. Попап при этом не растёт за край: он занимает высоту окна браузера, а содержимое прокручивается внутри.");
+    }
+    add("button", "Дочитал, закрыть", "demo").setAttribute("data-popup-close", "");
+    Popup.open({ content: box, label: "Длинная статья" });
+  };
 </script>
 </body>
 </html>
