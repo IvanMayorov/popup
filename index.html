@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Popup — пример</title>
+<link rel="stylesheet" href="popup.css">
+<style>body { font: 17px/1.5 system-ui, sans-serif; margin: 0; padding: 48px 24px; } button.demo { font: inherit; padding: 10px 16px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; margin: 0 8px 8px 0; }</style>
+</head>
+<body>
+<h1>Popup</h1>
+<p>Нажмите кнопку, чтобы открыть попап. Закрыть его можно крестиком, клавишей Esc или кликом по фону.</p>
+<button class="demo" id="a">Обычный попап</button>
+<button class="demo" id="b">Широкий попап</button>
+<template id="article"><h2>Заголовок статьи</h2><p>Любой HTML: текст, картинки, видео. Длинное содержимое прокручивается внутри окна.</p><p><button class="demo" data-popup-close>Закрыть из содержимого</button></p></template>
+<script src="popup.js"></script>
+<script>
+  const tpl = document.getElementById("article");
+  document.getElementById("a").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Пример" });
+  document.getElementById("b").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Широкий пример", wide: true });
+</script>
+</body>
+</html>
