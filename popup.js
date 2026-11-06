@@ -60,6 +60,21 @@
         opts.onClose && opts.onClose();
       },
     };
+    // Прокрутка не застревает: когда внутренний блок со скроллом докручен до конца, колесо крутит сам слой попапа
+    const wrap = root.querySelector(".popup__wrap");
+    wrap.addEventListener("wheel", (e) => {
+      if (e.ctrlKey || !e.deltaY) return;
+      let el = e.target;
+      for (; el && el !== wrap; el = el.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1) {
+          if (e.deltaY < 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1) return;
+          break;
+        }
+      }
+      if (!el || el === wrap) return;
+      e.preventDefault();
+      wrap.scrollTop += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? wrap.clientHeight : 1);
+    }, { passive: false });
     root.addEventListener("click", (e) => {
       if (e.target.closest("[data-popup-close]") || e.target.classList.contains("popup__wrap")) api.close();
     });
