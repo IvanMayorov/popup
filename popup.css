@@ -14,15 +14,16 @@
 }
 .popup-lock { overflow: hidden; }
 .popup__shade { position: fixed; inset: 0; z-index: 1000; background: var(--popup-shade); backdrop-filter: blur(0.25rem); }
-.popup__wrap { position: fixed; inset: 0; z-index: 1001; display: flex; justify-content: center; padding: var(--popup-gap) 24px; }
-.popup__panel { position: relative; display: flex; width: min(100%, var(--popup-width)); border-radius: var(--popup-radius); background: var(--popup-bg); color: var(--popup-fg); box-shadow: var(--popup-shadow); overflow: hidden; outline: none; }
+/* Слой с окном прокручивается как страница: окно растёт с содержимым и уходит за нижний край */
+.popup__wrap { position: fixed; inset: 0; z-index: 1001; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: var(--popup-gap) 24px 0; }
+.popup__panel { position: relative; display: flex; width: min(100%, var(--popup-width)); border-radius: var(--popup-radius); background: var(--popup-bg); color: var(--popup-fg); box-shadow: var(--popup-shadow); outline: none; margin-bottom: var(--popup-gap); }
 .popup--wide .popup__panel { width: min(100%, var(--popup-wide-width)); }
-.popup__body { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 56px 48px; }
+.popup__body { flex: 1; min-width: 0; padding: 56px 48px; }
 .popup__x { position: absolute; top: 16px; right: 16px; z-index: 2; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgb(127 127 127 / 0.1); color: inherit; cursor: pointer; }
 .popup__x:hover { background: rgb(127 127 127 / 0.18); }
 @media (max-width: 760px) {
   .popup__wrap { padding: 0; }
-  .popup__panel { width: 100%; border-radius: 0; }
+  .popup__panel { width: 100%; min-height: 100%; margin-bottom: 0; border-radius: 0; }
   .popup__body { padding: 64px 20px 40px; }
   .popup__x { top: 12px; right: 12px; }
 }
