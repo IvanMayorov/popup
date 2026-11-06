@@ -4,7 +4,7 @@
   --popup-fg: #121212;
   --popup-shade: rgb(26 28 33 / 0.5);
   --popup-radius: 20px;
-  --popup-width: 820px;
+  --popup-width: 700px;
   --popup-wide-width: 1360px;
   --popup-gap: 32px;
   --popup-shadow: 0 24px 64px rgb(0 0 0 / 0.18);
@@ -21,6 +21,16 @@
 .popup__body { flex: 1; min-width: 0; padding: 56px 48px; }
 .popup__x { position: absolute; top: 16px; right: 16px; z-index: 2; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgb(127 127 127 / 0.1); color: inherit; cursor: pointer; }
 .popup__x:hover { background: rgb(127 127 127 / 0.18); }
+/* Лёгкая анимация: окно чуть поднимается и проявляется, при закрытии быстро гаснет */
+.popup__shade { animation: popupFade 140ms cubic-bezier(0.33, 1, 0.68, 1); }
+.popup__panel { animation: popupIn 180ms cubic-bezier(0.25, 1, 0.5, 1); }
+.popup--out .popup__shade { animation: popupFadeOut 120ms cubic-bezier(0.33, 1, 0.68, 1) forwards; }
+.popup--out .popup__panel { animation: popupOut 120ms cubic-bezier(0.33, 1, 0.68, 1) forwards; }
+@keyframes popupFade { from { opacity: 0; } }
+@keyframes popupIn { from { opacity: 0; translate: 0 8px; scale: .985; } }
+@keyframes popupFadeOut { to { opacity: 0; } }
+@keyframes popupOut { to { opacity: 0; translate: 0 6px; scale: .99; } }
+@media (prefers-reduced-motion: reduce) { .popup__shade, .popup__panel { animation: none !important; } }
 @media (max-width: 760px) {
   .popup__wrap { padding: 0; }
   .popup__panel { width: 100%; min-height: 100%; margin-bottom: 0; border-radius: 0; }

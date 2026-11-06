@@ -1,5 +1,5 @@
 /**
- * popup.js — простой попап без зависимостей и без анимации.
+ * popup.js — простой попап без зависимостей, с лёгкой анимацией появления и исчезания.
  * Вырос из попапа проекта Rocket и попапа статей курса «Вайбдизайнер».
  *
  *   const p = Popup.open({ content: "<h1>Привет</h1>", label: "Привет", onClose() {} });
@@ -48,7 +48,11 @@
       close() {
         if (closed) return;
         closed = true;
-        root.remove();
+        // Сначала короткая анимация исчезания (120 мс), потом окно убирается со страницы
+        const fast = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        root.classList.add("popup--out");
+        root.style.pointerEvents = "none";
+        setTimeout(() => root.remove(), fast ? 0 : 120);
         made.forEach((el) => (el.inert = false));
         stack.splice(stack.indexOf(api), 1);
         if (!stack.length) document.documentElement.classList.remove("popup-lock");
