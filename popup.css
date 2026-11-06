@@ -4,7 +4,7 @@
   --popup-fg: #121212;
   --popup-shade: rgb(26 28 33 / 0.5);
   --popup-radius: 20px;
-  --popup-width: 700px;
+  --popup-width: 800px;
   --popup-wide-width: 1360px;
   --popup-gap: 32px;
   --popup-shadow: 0 24px 64px rgb(0 0 0 / 0.18);
@@ -19,7 +19,8 @@
 .popup__panel { position: relative; display: flex; width: min(100%, var(--popup-width)); border-radius: var(--popup-radius); background: var(--popup-bg); color: var(--popup-fg); box-shadow: var(--popup-shadow); outline: none; margin-bottom: var(--popup-gap); }
 .popup--wide .popup__panel { width: min(100%, var(--popup-wide-width)); }
 .popup__body { flex: 1; min-width: 0; padding: 56px 48px; }
-.popup__x { position: absolute; top: 16px; right: 16px; z-index: 2; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgb(127 127 127 / 0.1); color: inherit; cursor: pointer; }
+/* Крестик едет вместе с прокруткой: закрыть можно с любого места */
+.popup__x { position: sticky; top: calc(16px - var(--popup-gap)); order: 2; flex: none; align-self: flex-start; margin: 16px 16px 0 -56px; z-index: 2; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgb(127 127 127 / 0.1); color: inherit; cursor: pointer; }
 .popup__x:hover { background: rgb(127 127 127 / 0.18); }
 /* Лёгкая анимация: окно чуть поднимается и проявляется, при закрытии быстро гаснет */
 .popup__shade { animation: popupFade 140ms cubic-bezier(0.33, 1, 0.68, 1); }
@@ -35,5 +36,5 @@
   .popup__wrap { padding: 0; }
   .popup__panel { width: 100%; min-height: 100%; margin-bottom: 0; border-radius: 0; }
   .popup__body { padding: 64px 20px 40px; }
-  .popup__x { top: 12px; right: 12px; }
+  .popup__x { top: 12px; margin: 12px 12px 0 -52px; }
 }
