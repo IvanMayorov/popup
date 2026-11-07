@@ -22,19 +22,36 @@
 /* Крестик едет вместе с прокруткой: закрыть можно с любого места */
 .popup__x { position: sticky; top: calc(16px - var(--popup-gap)); order: 2; flex: none; align-self: flex-start; margin: 16px 16px 0 -56px; z-index: 2; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgb(127 127 127 / 0.1); color: inherit; cursor: pointer; }
 .popup__x:hover { background: rgb(127 127 127 / 0.18); }
+/* Стопка: нижний попап уменьшается и приподнимается, верхний открывается чуть ниже, чтобы край нижнего был виден */
+.popup__panel { transform-origin: 50% 0; transition: scale 220ms cubic-bezier(0.25, 1, 0.5, 1), translate 220ms cubic-bezier(0.25, 1, 0.5, 1), filter 220ms; }
+.popup--behind .popup__panel { scale: 0.97; translate: 0 -6px; filter: brightness(0.96); }
+.popup--behind .popup__x { visibility: hidden; }
+.popup--stacked .popup__shade { background: rgb(0 0 0 / 0.14); backdrop-filter: none; }
+.popup--stacked .popup__wrap { padding-top: calc(var(--popup-gap) + 8px); }
 /* Лёгкая анимация: окно чуть поднимается и проявляется, при закрытии быстро гаснет */
 .popup__shade { animation: popupFade 140ms cubic-bezier(0.33, 1, 0.68, 1); }
 .popup__panel { animation: popupIn 180ms cubic-bezier(0.25, 1, 0.5, 1); }
 .popup--out .popup__shade { animation: popupFadeOut 120ms cubic-bezier(0.33, 1, 0.68, 1) forwards; }
 .popup--out .popup__panel { animation: popupOut 120ms cubic-bezier(0.33, 1, 0.68, 1) forwards; }
+/* Второй попап поверх первого поднимается снизу и быстро проявляется, при закрытии опускается и гаснет */
+/* Едет весь слой, а не окно: так у слоя не появляется лишняя полоса прокрутки во время движения */
+.popup--stacked .popup__panel, .popup--stacked.popup--out .popup__panel { animation: none; }
+.popup--stacked .popup__wrap { animation: popupUp 380ms cubic-bezier(0.22, 1, 0.36, 1); }
+.popup--stacked.popup--out .popup__wrap { animation: popupDown 200ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+/* Окно поднимается с четверти экрана ниже; прозрачность уходит в первой трети пути, чтобы недолго накладываться на нижний попап */
+@keyframes popupUp { from { translate: 0 25vh; opacity: 0; } 35% { opacity: 1; } }
+@keyframes popupDown { 60% { opacity: 1; } to { translate: 0 20vh; opacity: 0; } }
 @keyframes popupFade { from { opacity: 0; } }
 @keyframes popupIn { from { opacity: 0; translate: 0 8px; scale: .985; } }
 @keyframes popupFadeOut { to { opacity: 0; } }
 @keyframes popupOut { to { opacity: 0; translate: 0 6px; scale: .99; } }
-@media (prefers-reduced-motion: reduce) { .popup__shade, .popup__panel { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .popup__shade, .popup__panel, .popup__wrap { animation: none !important; transition: none !important; } }
 @media (max-width: 760px) {
   .popup__wrap { padding: 0; }
   .popup__panel { width: 100%; min-height: 100%; margin-bottom: 0; border-radius: 0; }
   .popup__body { padding: 64px 20px 40px; }
   .popup__x { top: 12px; margin: 12px 12px 0 -52px; }
+  .popup--behind .popup__panel { border-radius: 16px; }
+  .popup--stacked .popup__wrap { padding-top: 10px; }
+  .popup--stacked .popup__panel { border-radius: 16px 16px 0 0; }
 }

@@ -4,32 +4,280 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Popup — пример</title>
 <link rel="stylesheet" href="popup.css">
-<style>body { font: 17px/1.5 system-ui, sans-serif; margin: 0; padding: 48px 24px; } button.demo { font: inherit; padding: 10px 16px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; margin: 0 8px 8px 0; }</style>
+<style>
+  /* Демо-страница. Попап сам по себе живёт в popup.css и popup.js, здесь только оформление примера */
+  :root {
+    --bg: #fcfcfc; --fg: #1c1c1c; --muted: #6f6f6f; --line: #e3e3e3; --line-2: #ececec;
+    --card: #ffffff; --stage: #f6f6f6; --hover: #f0f0f0; --press: #e8e8e8;
+    --accent: #0f9d6b; --accent-soft: rgb(15 157 107 / 0.1); --ring: rgb(15 157 107 / 0.45);
+    --code-bg: #f7f7f7; --kbd: #ffffff;
+    --popup-bg: #ffffff; --popup-radius: 14px; --popup-shade: rgb(18 18 18 / 0.4);
+    --popup-shadow: 0 0 0 1px rgb(0 0 0 / 0.06), 0 24px 64px rgb(0 0 0 / 0.16);
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111111; --fg: #ededed; --muted: #a0a0a0; --line: #2a2a2a; --line-2: #232323;
+      --card: #191919; --stage: #151515; --hover: #232323; --press: #2c2c2c;
+      --accent: #3dd68c; --accent-soft: rgb(61 214 140 / 0.12); --ring: rgb(61 214 140 / 0.5);
+      --code-bg: #141414; --kbd: #1f1f1f;
+      --popup-bg: #191919; --popup-shade: rgb(0 0 0 / 0.6);
+      --popup-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 64px rgb(0 0 0 / 0.5);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: fixed; inset: 0 var(--popup-scrollbar, 0px) auto 0; height: 420px; pointer-events: none; z-index: -1;
+    background: radial-gradient(60% 100% at 70% 0%, var(--accent-soft), transparent 70%); }
+  a { color: inherit; }
+  .page { max-width: 760px; margin: 0 auto; padding: 72px 20px 96px; }
+
+  .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: 14px; font-weight: 600; }
+  h1 { margin: 0 0 16px; font-size: clamp(32px, 5vw, 40px); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
+  .lead { margin: 0 0 22px; font-size: 17px; color: var(--muted); max-width: 60ch; }
+  .lead b { color: var(--fg); font-weight: 500; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 40px; padding: 0; list-style: none; }
+  .tags li { padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13px; color: var(--muted); }
+
+  /* Витрина: рамка, в ней сцена с панелью кнопок, как в примерах Reka UI */
+  .demo-head { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+  .switch { position: relative; width: 36px; height: 20px; border: 0; padding: 0; border-radius: 999px; background: var(--press); cursor: pointer; transition: background .15s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .25); transition: translate .15s; }
+  .switch[aria-checked="true"] { background: var(--accent); }
+  .switch[aria-checked="true"]::after { translate: 16px 0; }
+  .frame { border: 1px solid var(--line); border-radius: 14px; background: var(--stage); overflow: hidden; }
+  .stage { display: grid; place-items: center; min-height: 300px; padding: 48px 20px; }
+  .stage-inner { max-width: 100%; }
+
+  .toolbar { display: flex; align-items: center; gap: 2px; padding: 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); flex-wrap: wrap; justify-content: center; }
+  .toolbar .sep { flex: none; width: 1px; height: 18px; margin: 0 6px; background: var(--line); }
+  .tb { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: var(--fg); font: inherit; font-size: 13.5px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .12s, color .12s; }
+  .tb svg { flex: none; width: 16px; height: 16px; color: var(--muted); transition: color .12s; }
+  .tb:hover { background: var(--hover); }
+  .tb:hover svg { color: var(--fg); }
+  .tb:active { background: var(--press); }
+  .tb:focus-visible, .switch:focus-visible, .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .stage { min-height: 0; padding: 36px 16px; }
+    .stage-inner { width: 100%; }
+    .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .toolbar .sep { display: none; }
+    .tb { justify-content: flex-start; }
+  }
+  .hint { margin: 14px 2px 0; font-size: 13px; color: var(--muted); text-align: center; }
+  kbd { display: inline-block; min-width: 22px; padding: 0 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--kbd); font: 500 12px/18px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); text-align: center; }
+
+  .frame-foot { display: flex; justify-content: flex-end; gap: 4px; padding: 0 12px 10px; }
+  .frame-foot a { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; color: var(--muted); }
+  .frame-foot a:hover { background: var(--hover); color: var(--fg); }
+
+  .code { display: none; margin: 0; border-top: 1px solid var(--line); background: var(--code-bg); padding: 18px 20px; overflow-x: auto; font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); }
+  .frame.show-code .code { display: block; }
+  .code .c { color: var(--muted); }
+  .code .k { color: var(--accent); }
+
+  h2.sec { margin: 56px 0 16px; font-size: 22px; letter-spacing: -0.01em; }
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .features li { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 14px; color: var(--muted); }
+  .features b { display: block; margin-bottom: 2px; color: var(--fg); font-weight: 600; font-size: 14.5px; }
+  .footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line-2); font-size: 14px; color: var(--muted); }
+  .footer a { color: var(--fg); text-decoration-color: var(--line); text-underline-offset: 3px; }
+  .footer a:hover { text-decoration-color: var(--accent); }
+
+  /* Содержимое попапов */
+  .article .eyebrow { margin-bottom: 4px; }
+  .article h2 { margin: 0 0 12px; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; }
+  .article h3 { margin: 32px 0 8px; font-size: 18px; }
+  .article p { margin: 0 0 14px; color: var(--muted); }
+  .article p.big { font-size: 17px; color: var(--fg); }
+  .article .shot { height: 220px; margin: 24px 0; border: 1px solid var(--line); border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-soft), transparent 60%), repeating-linear-gradient(0deg, transparent 0 23px, var(--line-2) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, var(--line-2) 23px 24px), var(--stage); }
+  .article .inner { max-height: 260px; overflow-y: auto; margin: 20px 0 24px; padding: 4px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--stage); }
+  .article .inner b { display: inline-block; display: block; color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .article .inner p { padding: 10px 0; margin: 0; border-bottom: 1px solid var(--line-2); font-size: 14px; }
+  .article .inner p:last-child { border-bottom: 0; }
+  .article .label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .article .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .btn { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .12s; }
+  .btn:hover { background: var(--hover); }
+  .btn--accent { border-color: transparent; background: var(--accent); color: #fff; }
+  .btn--accent:hover { background: var(--accent); filter: brightness(1.08); }
+  @media (prefers-color-scheme: dark) { .btn--accent { color: #08140e; } }
+</style>
 </head>
 <body>
-<h1>Popup</h1>
-<p>Нажмите кнопку, чтобы открыть попап. Закрыть его можно крестиком, клавишей Esc или кликом по фону.</p>
-<button class="demo" id="a">Обычный попап</button>
-<button class="demo" id="b">Широкий попап</button>
-<button class="demo" id="c">Много текста</button>
-<p>Страница короткая, а в третьем примере текста намного больше, чем помещается на экран. Окно уходит вниз за край экрана, и сразу видно, что дальше есть текст. Прокручивается не окно, а слой с попапом целиком, как обычная страница. Сайт под попапом при этом стоит на месте.</p>
-<template id="article"><h2>Заголовок статьи</h2><p>Любой HTML: текст, картинки, видео. Высота окна подстраивается под содержимое.</p><p><button class="demo" data-popup-close>Закрыть из содержимого</button></p></template>
+<main class="page">
+  <p class="eyebrow">Без зависимостей</p>
+  <h1>Popup</h1>
+  <p class="lead">Простой попап для статей, карточек и форм. <b>Окно растёт с содержимым, а прокручивается весь слой</b>, как обычная страница. Крестик едет вместе с прокруткой.</p>
+  <ul class="tags"><li>~4 КБ JS</li><li>Esc и клик по фону</li><li>Фокус и inert</li><li>Светлая и тёмная тема</li></ul>
+
+  <div class="demo-head">
+    <span>Показать код</span>
+    <button class="switch" id="code-toggle" role="switch" aria-checked="false" aria-label="Показать код"></button>
+  </div>
+  <div class="frame" id="frame">
+    <div class="stage">
+      <div class="stage-inner">
+        <div class="toolbar" role="toolbar" aria-label="Примеры попапа">
+          <button class="tb" id="a" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 10h8M8 14h5"/></svg>
+            Обычный
+          </button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="tb" id="c" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 10h6M9 13h6M9 16h4"/></svg>
+            Длинный текст
+          </button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="tb" id="e" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M16 8v8"/><path d="M8 9h4M8 12h4M8 15h4"/></svg>
+            Внутренний скролл
+          </button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="tb" id="d" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3"/></svg>
+            Поверх другого
+          </button>
+        </div>
+        <p class="hint">Закрыть: крестик, <kbd>Esc</kbd> или клик по фону</p>
+      </div>
+    </div>
+    <div class="frame-foot">
+      <a href="https://github.com/IvanMayorov/popup" aria-label="Исходники на GitHub" title="Исходники на GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+      </a>
+    </div>
+<pre class="code"><span class="c">&lt;!-- Подключение --&gt;</span>
+&lt;link rel="stylesheet" href="popup.css"&gt;
+&lt;script src="popup.js"&gt;&lt;/script&gt;
+
+<span class="c">// Открыть</span>
+<span class="k">const</span> p = Popup.open({
+  content: "&lt;h2&gt;Привет&lt;/h2&gt;&lt;p&gt;Любой HTML или DOM-элемент&lt;/p&gt;",
+  label: "Привет",   <span class="c">// название окна для экранных дикторов</span>
+  wide: <span class="k">false</span>,       <span class="c">// true — широкое окно</span>
+  onClose() {},
+});
+p.close();          <span class="c">// закрыть из кода</span>
+Popup.closeAll();   <span class="c">// закрыть все</span></pre>
+  </div>
+
+  <h2 class="sec">Что умеет</h2>
+  <ul class="features">
+    <li><b>Скролл всего слоя</b>Окно уходит за нижний край, сразу видно, что дальше есть текст.</li>
+    <li><b>Липкий крестик</b>Закрыть можно с любого места длинной статьи.</li>
+    <li><b>Скролл не застревает</b>После конца внутреннего блока колесо крутит окно дальше.</li>
+    <li><b>Сайт стоит на месте</b>Страница под попапом недоступна и не прокручивается.</li>
+    <li><b>Попапы стопкой</b>Нижний отъезжает назад, Esc закрывает верхний, фокус возвращается.</li>
+    <li><b>Сайт не прыгает</b>Вместо пропавшей полосы прокрутки добавляется такой же отступ.</li>
+    <li><b>Лёгкая анимация</b>180 мс на появление, 120 мс на исчезание, учитывает «Уменьшить движение».</li>
+  </ul>
+
+  <p class="footer">Исходники и README на <a href="https://github.com/IvanMayorov/popup">github.com/IvanMayorov/popup</a>. Вырос из попапа проекта Rocket и попапа статей курса «Вайбдизайнер».</p>
+</main>
+
+<template id="article">
+  <div class="article">
+    <p class="eyebrow">Обычный попап</p>
+    <h2>Окно шириной 800 пикселей</h2>
+    <p class="big">Внутрь можно положить любой HTML: текст, картинку, видео или форму. Высота окна подстраивается под содержимое, а на телефоне оно раскрывается на весь экран.</p>
+    <div class="shot" aria-hidden="true"></div>
+    <p>Закрыть окно можно крестиком, клавишей Esc, кликом по затемнённому фону или любой из кнопок ниже. Чтобы своя кнопка закрывала окно, достаточно добавить ей атрибут <code>data-popup-close</code>.</p>
+    <div class="actions"><button class="btn btn--accent" data-popup-close>Понятно</button><button class="btn" data-popup-close>Закрыть</button></div>
+  </div>
+</template>
+
 <script src="popup.js"></script>
 <script>
   const tpl = document.getElementById("article");
-  document.getElementById("a").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Пример" });
-  document.getElementById("b").onclick = () => Popup.open({ content: tpl.content.cloneNode(true), label: "Широкий пример", wide: true });
+  const article = () => tpl.content.cloneNode(true);
+  document.getElementById("a").onclick = () => Popup.open({ content: article(), label: "Пример" });
+  // Длинная статья: настоящий текст о том, каким должен быть попап
+  const longArticle = [
+    ["h3", "Зачем вообще попап"],
+    ["p", "Попап хорош, когда нужно показать что-то, не уводя человека со страницы: подробности товара, статью из ленты, форму заявки. Закрыл окно, и ты там же, где был, на том же месте прокрутки."],
+    ["p", "Плохой попап выскакивает сам, через пять секунд после входа на сайт, и просит подписаться на рассылку. Хороший открывается только по клику и закрывается так же легко, как открылся."],
+    ["h3", "Как его закрывают"],
+    ["p", "Люди закрывают окна по-разному. Кто-то ищет крестик в углу, кто-то жмёт Esc, кто-то просто кликает мимо окна. Нужно поддержать все три способа, иначе часть людей застрянет."],
+    ["p", "Крестик должен быть под рукой, даже если текст длинный. Поэтому здесь он липкий: прокрутите статью до середины и посмотрите в правый верхний угол, он едет вместе с вами."],
+    ["h3", "Почему прокручивается всё окно"],
+    ["p", "Частая ошибка: окно фиксированной высоты, а внутри маленькая полоса прокрутки. Текст зажат в узкой рамке, колесо мыши то крутит окно, то нет, а на телефоне это совсем неудобно."],
+    ["p", "Здесь окно растёт вместе с содержимым и уходит за нижний край экрана. Сразу видно, что дальше есть ещё текст. Прокручивается слой с попапом целиком, как обычная страница, к которой все привыкли."],
+    ["p", "Сайт под окном при этом стоит на месте. А чтобы он не дёрнулся, когда пропадает его полоса прокрутки, на её место добавляется такой же отступ."],
+    ["h3", "Фокус и клавиатура"],
+    ["p", "Когда окно открылось, фокус переходит в него. Клавиша Tab ходит только по кнопкам внутри окна и не убегает на страницу под ним: остальной сайт на это время недоступен."],
+    ["p", "После закрытия фокус возвращается на кнопку, которая открыла окно. Человек с клавиатурой продолжает с того же места, а не начинает страницу сначала."],
+    ["h3", "Анимация"],
+    ["p", "Окно появляется за 180 мс: чуть поднимается и проявляется. Исчезает ещё быстрее, за 120 мс. Этого хватает, чтобы глаз понял, откуда взялось окно, и при этом ничего не тормозит."],
+    ["p", "Если в настройках системы включено «Уменьшить движение», анимации нет совсем. Окно просто появляется и исчезает."],
+    ["h3", "На телефоне"],
+    ["p", "На узком экране окно раскрывается на всю ширину и минимум на всю высоту. Отступы по краям на телефоне только съедают место, а крестик остаётся в правом верхнем углу."],
+    ["p", "Вот и всё. Если дочитали до сюда, значит, прокрутка работает как надо."],
+  ];
   document.getElementById("c").onclick = () => {
     const box = document.createElement("div");
+    box.className = "article";
     const add = (tag, text, cls) => { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; box.append(el); return el; };
-    add("h2", "Длинная статья");
-    add("p", "Прокрутите вниз: окно едет вместе с текстом, а сайт под ним стоит.");
-    for (let n = 1; n <= 30; n++) {
-      if (n % 6 === 1) add("h3", "Раздел " + Math.ceil(n / 6));
-      else add("p", "Абзац " + n + ". Длинный текст нужен, чтобы окно стало выше экрана. Окно растёт вместе с содержимым и уходит вниз, а прокручивается слой с попапом целиком.");
-    }
-    add("button", "Дочитал, закрыть", "demo").setAttribute("data-popup-close", "");
+    add("p", "Длинная статья", "eyebrow");
+    add("h2", "Каким должен быть хороший попап");
+    add("p", "Короткая памятка о том, как сделать окно, которое помогает, а не раздражает. Текст длинный специально: окно уходит за край экрана, а крестик едет вместе с вами.", "big");
+    longArticle.forEach(([tag, text]) => add(tag, text));
+    const actions = add("div", "", "actions");
+    const btn = document.createElement("button");
+    btn.className = "btn btn--accent"; btn.textContent = "Дочитал, закрыть"; btn.setAttribute("data-popup-close", "");
+    actions.append(btn);
     Popup.open({ content: box, label: "Длинная статья" });
+  };
+  // Внутренний скролл: список изменений в отдельном блоке со своей прокруткой
+  const uses = [
+    ["Статья", "Материал из ленты открывается поверх, а лента остаётся на месте."],
+    ["Товар", "Фото, описание и кнопка «В корзину» без перехода в карточку."],
+    ["Заявка", "Короткая форма: имя, телефон, удобное время звонка."],
+    ["Видео", "Ролик на всю ширину окна, закрыл и вернулся к странице."],
+    ["Галерея", "Большие фотографии проекта с подписями."],
+    ["Кейс", "Задача, решение и результат для портфолио."],
+    ["Вакансия", "Описание, требования и кнопка «Откликнуться»."],
+    ["Схема", "Широкое окно для диаграммы или карты."],
+    ["Отзыв", "Полный текст отзыва вместо обрезанной цитаты."],
+    ["Тариф", "Что входит в тариф и сравнение с соседними."],
+    ["Команда", "Биография человека из блока «О нас»."],
+    ["Меню", "Блюдо ресторана с составом и весом."],
+    ["Расписание", "Занятия на неделю с временем и залами."],
+    ["Условия", "Правила акции или доставки, которые нужны не всем."],
+    ["Справка", "Подсказка к сложному полю формы."],
+    ["Подтверждение", "«Точно удалить?» с двумя кнопками."],
+  ];
+  document.getElementById("e").onclick = () => {
+    const box = document.createElement("div");
+    box.className = "article";
+    const rows = uses.map(([v, t]) => "<p><b>" + v + "</b>" + t + "</p>").join("");
+    box.innerHTML =
+      '<p class="eyebrow">Внутренний скролл</p><h2>Блок со своей прокруткой</h2>' +
+      '<p class="big">Наведите курсор на список ниже и крутите колесо. Сначала прокрутится список, а когда он закончится, дальше поедет всё окно. Прокрутка нигде не замирает.</p>' +
+      '<div class="label"><span>Что показать в попапе</span><span>' + uses.length + ' идей</span></div>' +
+      '<div class="inner" tabindex="0">' + rows + '</div>' +
+      '<h3>Зачем это нужно</h3>' +
+      '<p>Внутри попапа часто оказываются блоки со своей прокруткой: длинный список, таблица, код, условия соглашения. Обычно, когда такой блок докручен до конца, колесо мыши перестаёт работать, и человек не понимает, почему окно не едет дальше.</p>' +
+      '<p>Здесь попап замечает, что внутренний блок закончился, и передаёт прокрутку самому окну. Вверх работает так же: сначала блок возвращается к началу, потом окно.</p>' +
+      '<h3>Как это сделано</h3>' +
+      '<p>Попап слушает колесо мыши. Если под курсором блок, который ещё можно крутить в эту сторону, прокручивается он. Если блок уже в конце, прокрутка уходит слою с попапом. Никаких настроек не нужно, это работает для любого содержимого.</p>' +
+      '<p>На тачпаде и на телефоне браузер делает это сам, поэтому попап вмешивается только в прокрутку колесом.</p>' +
+      '<div class="actions"><button class="btn btn--accent" data-popup-close>Понятно</button></div>';
+    Popup.open({ content: box, label: "Внутренний скролл" });
+  };
+  document.getElementById("d").onclick = () => {
+    const box = document.createElement("div");
+    box.className = "article";
+    box.innerHTML = '<p class="eyebrow">Первый попап</p><h2>Откройте ещё один</h2><p class="big">Попапы можно открывать друг поверх друга. Этот отъедет назад в стопку, а Esc закроет только верхний.</p><div class="actions"><button class="btn btn--accent" type="button" data-next>Открыть второй</button><button class="btn" data-popup-close>Закрыть</button></div>';
+    box.querySelector("[data-next]").onclick = () => Popup.open({ content: '<div class="article"><p class="eyebrow">Второй попап</p><h2>Я сверху</h2><p class="big">Первый попап виден сзади: он уменьшился и приподнялся. Нажмите Esc, закроется только этот.</p><div class="actions"><button class="btn" data-popup-close>Назад к первому</button></div></div>', label: "Второй попап" });
+    Popup.open({ content: box, label: "Первый попап" });
+  };
+  const toggle = document.getElementById("code-toggle");
+  toggle.onclick = () => {
+    const on = toggle.getAttribute("aria-checked") !== "true";
+    toggle.setAttribute("aria-checked", on);
+    document.getElementById("frame").classList.toggle("show-code", on);
   };
 </script>
 </body>

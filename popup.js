@@ -7,7 +7,8 @@
  *
  * Закрывается крестиком, клавишей Esc, кликом по фону и любым элементом с [data-popup-close].
  * Пока попап открыт, остальная страница недоступна (inert) и не прокручивается.
- * Попапы можно открывать друг поверх друга: Esc закрывает верхний.
+ * Попапы можно открывать друг поверх друга: нижний отъезжает назад в стопку, Esc закрывает верхний.
+ * Пока попап открыт, полоса прокрутки страницы заменяется отступом, и сайт не прыгает.
  */
 (function (global) {
   const stack = [];
@@ -17,6 +18,28 @@
     e.preventDefault();
     stack[stack.length - 1].close();
   });
+
+  // Компенсация скроллбара: когда страница перестаёт прокручиваться, её полоса прокрутки пропадает.
+  // Чтобы сайт не прыгал вбок, на место полосы добавляется такой же отступ справа.
+  // Ширина полосы лежит в переменной --popup-scrollbar: её можно добавить фиксированной шапке.
+  let padBefore = "";
+  function lock() {
+    const html = document.documentElement;
+    const bar = window.innerWidth - html.clientWidth;
+    padBefore = html.style.paddingRight;
+    if (bar > 0) {
+      const pad = parseFloat(getComputedStyle(html).paddingRight) || 0;
+      html.style.paddingRight = pad + bar + "px";
+    }
+    html.style.setProperty("--popup-scrollbar", Math.max(bar, 0) + "px");
+    html.classList.add("popup-lock");
+  }
+  function unlock() {
+    const html = document.documentElement;
+    html.classList.remove("popup-lock");
+    html.style.paddingRight = padBefore;
+    html.style.removeProperty("--popup-scrollbar");
+  }
 
   function open(opts = {}) {
     const back = document.activeElement;
@@ -38,8 +61,14 @@
     // Остальная страница недоступна, как под модальным окном
     const made = [...document.body.children].filter((el) => !el.inert);
     made.forEach((el) => (el.inert = true));
+    const under = stack[stack.length - 1];
+    if (under) {
+      // Нижний попап отъезжает назад: чуть меньше и выше, верхний встаёт перед ним
+      under.el.classList.add("popup--behind");
+      root.classList.add("popup--stacked");
+    }
     document.body.append(root);
-    if (!stack.length) document.documentElement.classList.add("popup-lock");
+    if (!document.documentElement.classList.contains("popup-lock")) lock();
 
     let closed = false;
     const api = {
@@ -52,10 +81,17 @@
         const fast = matchMedia("(prefers-reduced-motion: reduce)").matches;
         root.classList.add("popup--out");
         root.style.pointerEvents = "none";
-        setTimeout(() => root.remove(), fast ? 0 : 120);
+        // Прокрутку страницы возвращаем только после того, как окно погасло:
+        // иначе полоса прокрутки появится раньше и гаснущее окно дёрнется вбок
+        // Длительность берётся из CSS: обычное окно гаснет за 120 мс, окно из стопки уезжает вниз за 200 мс
+        const ms = fast ? 0 : Math.max(...[panel, wrap].map((el) => parseFloat(getComputedStyle(el).animationDuration) * 1000 || 0));
+        setTimeout(() => {
+          root.remove();
+          if (!stack.length) unlock();
+        }, ms);
         made.forEach((el) => (el.inert = false));
         stack.splice(stack.indexOf(api), 1);
-        if (!stack.length) document.documentElement.classList.remove("popup-lock");
+        if (stack.length) stack[stack.length - 1].el.classList.remove("popup--behind");
         if (back && back.focus) back.focus({ preventScroll: true });
         opts.onClose && opts.onClose();
       },
