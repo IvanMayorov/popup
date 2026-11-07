@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Popup — пример</title>
-<link rel="stylesheet" href="popup.css">
+<link rel="stylesheet" href="popup.css?v=3">
 <style>
   /* Демо-страница. Попап сам по себе живёт в popup.css и popup.js, здесь только оформление примера */
   :root {
@@ -188,7 +188,7 @@ Popup.closeAll();   <span class="c">// закрыть все</span></pre>
   </div>
 </template>
 
-<script src="popup.js"></script>
+<script src="popup.js?v=3"></script>
 <script>
   const tpl = document.getElementById("article");
   const article = () => tpl.content.cloneNode(true);
